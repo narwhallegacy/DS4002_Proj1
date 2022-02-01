@@ -1,0 +1,7 @@
+name.basics = read.delim('~/School/4th Year/DS4002/DS_Upload/name.basics.tsv', sep = "\t", header = TRUE)
+title.akas = read.delim('~/School/4th Year/DS4002/DS_Upload/title.akas.tsv', sep = "\t", header = TRUE)
+title.basics = read.delim('~/School/4th Year/DS4002/DS_Upload/title.basics.tsv', sep = "\t", header = TRUE)
+title.crew = read.delim('~/School/4th Year/DS4002/DS_Upload/title.crew.tsv', sep = "\t", header = TRUE)
+title.episode = read.delim('~/School/4th Year/DS4002/DS_Upload/title.episode.tsv', sep = "\t", header = TRUE)
+title.principals= read.delim('~/School/4th Year/DS4002/DS_Upload/title.principals.tsv', sep = "\t", header = TRUE)
+title.ratings = read.delim('~/School/4th Year/DS4002/DS_Upload/title.ratings.tsv', sep = "\t", header = TRUE)
