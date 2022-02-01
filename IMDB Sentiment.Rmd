@@ -1,0 +1,31 @@
+---
+title: "IMDB_Sentiment"
+author: "Jonathan Yu"
+date: "2/1/2022"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+```
+# Reading Data 
+```{r}
+file.choose()
+akas <- read.table(file = "/Users/jonathanyu/Desktop/IMDBProject/title.akas.tsv", sep = '\t', header = TRUE, fill = TRUE)
+akas <- subset(akas, region == "US" && ordering == 1)
+titlebasics <- read.table(file = '/Users/jonathanyu/Desktop/IMDBProject/title.basics.tsv', sep = '\t', header = TRUE, fill = TRUE)
+akas$titleId
+titlebasicssusbset <-subset(titlebasics, tconst == c(akas$titleId))
+crew <- read.table(file = '/Users/jonathanyu/Desktop/IMDBProject/title.crew.tsv', sep = '\t', header = TRUE, fill = TRUE)
+ratings <- read.table(file = '/Users/jonathanyu/Desktop/IMDBProject/title.ratings.tsv', sep = '\t', header = TRUE, fill = TRUE)
+
+# Not Needed
+episode <- read.table(file = '/Users/jonathanyu/Desktop/IMDBProject/title.episode.tsv', sep = '\t', header = TRUE, fill = TRUE)
+principals <- read.table(file = '/Users/jonathanyu/Desktop/IMDBProject/title.principals.tsv', sep = '\t', header = TRUE, fill = TRUE)
+namebasics <- read.table(file = "/Users/jonathanyu/Desktop/IMDBProject/name.basics.tsv", sep = '\t', header = TRUE, fill = TRUE)
+
+
+
+```
+
+
