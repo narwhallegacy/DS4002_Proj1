@@ -62,8 +62,13 @@ scriptKey = scriptKey[!duplicated(scriptKey[,1]),]
 #------------------------------------------------------------------------------
 ###Erroneous titles will be manually fixed in a text editor and re-uploaded with correct dates
 write.csv(file = "scriptKey.csv",scriptKey)
+#------------------------------------------------------------------------------
 
-
+# Cannot believe I lost the code again
+# In case I need to reference the coding method, scriptKey was sorted by descending number of ratings
+# Duplicate titles were removed
+# titles where the script was not the most reviewed movie of the same name had year changed to correct value manually changed in the script key
+# Name+year were combined into an identifier script in both scriptkey2 and titles.basic4 to create a titles.basic.red file, which was written to the folder
 
 #write.csv(file = "titleBasics_Scripts.csv",  title.basics4)
 
