@@ -81,5 +81,29 @@ write.csv(file = "scriptKey.csv",scriptKey)
 #Obtain random sample of movies after 1960 w/ at least 7000 reviews
 bigMovies.basics = title.basics3
 bigMovies.basics$startYear = as.numeric(title.basics3$startYear)
-bigMovies.basics = bigMovies.basics[!is.na(bigMovies.basics)]
-bigMovies.basics = bigMovies.basics[as.numeric(bigMovies.basics$startYear)>=1960,]
+bigMovies.basics = bigMovies.basics[!is.na(bigMovies.basics$startYear),]
+bigMovies.basics = bigMovies.basics[bigMovies.basics$startYear>=1960,]
+bigMovies.basics = merge(bigMovies.basics,title.ratings, by.x = "tconst", by.y = "tconst")
+bigMovies.basics = merge(bigMovies.basics,title.crew, by.x = "tconst", by.y = "tconst")
+bigMovies.basics = bigMovies.basics[bigMovies.basics$numVotes >= 7000,]
+
+#write.csv(file = "AllBigMovies.csv",bigMovies.basics)
+
+#Create list of people ONLY who appear in bigMovies.basics
+directors = c()
+writers = c()
+for (i in 1:length(allBigMovies$genres)) {
+  director = strsplit(allBigMovies$directors[i],",")
+  writer = strsplit(allBigMovies$writers[i],",")
+  directors = c(directors,director)
+  writers = c(writers, writer)
+}
+directors = unlist(directors)
+writers = unlist(writers)
+people = c(directors,writers)
+
+people = people[!duplicated(people)]
+
+
+name.basics.2 = name.basics[name.basics$nconst %in% people,]
+write.csv(file = "name.basics.red.csv",name.basics.2)
