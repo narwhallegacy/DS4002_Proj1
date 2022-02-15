@@ -73,3 +73,13 @@ write.csv(file = "scriptKey.csv",scriptKey)
 #write.csv(file = "titleBasics_Scripts.csv",  title.basics4)
 
 
+
+
+
+
+
+#Obtain random sample of movies after 1960 w/ at least 7000 reviews
+bigMovies.basics = title.basics3
+bigMovies.basics$startYear = as.numeric(title.basics3$startYear)
+bigMovies.basics = bigMovies.basics[!is.na(bigMovies.basics)]
+bigMovies.basics = bigMovies.basics[as.numeric(bigMovies.basics$startYear)>=1960,]
