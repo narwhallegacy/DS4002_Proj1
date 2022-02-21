@@ -88,6 +88,7 @@ bigMovies.basics = merge(bigMovies.basics,title.crew, by.x = "tconst", by.y = "t
 bigMovies.basics = bigMovies.basics[bigMovies.basics$numVotes >= 7000,]
 
 #write.csv(file = "AllBigMovies.csv",bigMovies.basics)
+#allBigMovies = read.csv("AllBigMovies.csv",header = TRUE)[,2:14]
 
 #Create list of people ONLY who appear in bigMovies.basics
 directors = c()
@@ -106,4 +107,190 @@ people = people[!duplicated(people)]
 
 
 name.basics.2 = name.basics[name.basics$nconst %in% people,]
-write.csv(file = "name.basics.red.csv",name.basics.2)
+#write.csv(file = "name.basics.red.csv",name.basics.2)
+
+
+
+name.basics.2 = read.csv("name.basics.red.csv")
+strlengths = nchar(name.basics.2$knownForTitles)
+knownFor = str_split(name.basics.2$knownForTitles,",")
+
+kn = data.frame(matrix(nrow=0,ncol=4))
+names(kn) = c("kn1","kn2","kn3","kn4")
+
+for (i in 1:nrow(name.basics.2)) {
+  kn1.i = kn2.i = kn3.i = kn4.i = NA
+  kn.i = unlist(knownFor[i])
+  
+  kn1.i = kn.i[1]
+  kn2.i = kn.i[2]
+  kn3.i = kn.i[3]
+  kn4.i = kn.i[4]
+  
+  kn[i,] = c(kn1.i,kn2.i,kn3.i,kn4.i)
+}
+
+name.basics.3 = data.frame(name.basics.2[,-7],kn)
+
+
+#----------------------------------------------------------------------------
+### Function to extract movie review score from unique ID
+#----------------------------------------------------------------------------
+findScore = function(tconst,movieData) {
+  index = match(tconst,movieData$tconst)
+  if (is.na(index)) {
+    return(NA)
+  } else {
+    return(movieData$averageRating[index])
+  }
+}
+
+avgScore = c()
+for (i in 1:nrow(name.basics.3)) {
+  avgScore.i = mean(c(findScore(name.basics.3$kn1[i],allBigMovies), findScore(name.basics.3$kn2[i],allBigMovies), findScore(name.basics.3$kn3[i],allBigMovies), findScore(name.basics.3$kn4[i],allBigMovies)),na.rm = TRUE)
+  if (is.na(avgScore.i)) {
+    avgScore = c(avgScore, NA)
+  } else {
+    avgScore = c(avgScore, avgScore.i)
+  }
+}
+name.basics.4 = name.basics.3 %>% mutate("AvgKnownScore" = avgScore)
+
+
+
+
+
+
+
+findVotes = function(tconst,movieData) {
+  index = match(tconst,movieData$tconst)
+  if (is.na(index)) {
+    return(NA)
+  } else {
+    return(movieData$numVotes[index])
+  }
+}
+
+avgVotes = c()
+for (i in 1:nrow(name.basics.3)) {
+  avgVotes.i = mean(c(findVotes(name.basics.3$kn1[i],allBigMovies), findVotes(name.basics.3$kn2[i],allBigMovies), findVotes(name.basics.3$kn3[i],allBigMovies), findVotes(name.basics.3$kn4[i],allBigMovies)),na.rm = TRUE)
+  if (is.na(avgVotes.i)) {
+    avgVotes = c(avgVotes, NA)
+  } else {
+    avgVotes = c(avgVotes, avgVotes.i)
+  }
+}
+name.basics.4 = name.basics.4 %>% mutate("AvgNumVotes" = avgVotes)
+
+#write.csv(name.basics.4,"names.basic.expanded.csv")
+
+
+
+allBigMovies = read.csv("AllBigMovies.csv",header = TRUE)[,2:14]
+people = read.csv("names.basic.expanded.csv",header = TRUE)[,3:13]
+
+#------------------------------------------------------------------------------
+### Add Director data to movie
+#------------------------------------------------------------------------------
+people.red = people[,-c(2,4:9)]
+
+allBigMovies2 = merge(allBigMovies,people.red,by.x = "directors", by.y = "nconst")
+
+names(allBigMovies2)[14:16] = c("DirBirthYear","DirAvgScore","DirAvgVotes")
+#TODO look into multiple directors
+#TODO leave NA when entry is not in people
+
+
+
+
+
+allAvgScores = c()
+allAvgVotes = c()
+#Test code
+allBigMovies2 = allBigMovies %>% mutate("DirAvgScore" = 0) %>% mutate("DirAvgVotes" = 0)
+for (i in 1:nrow(allBigMovies)) {
+  directors = unlist(strsplit(allBigMovies$directors[i],","))
+  for (j in 1:length(directors)) {
+    #TODO run through all directors, extracting & averaging DirAvgScore and DirAvgVotes
+    index = match(directors[j],people$nconst)
+    score = people$AvgKnownScore[index]
+    votes = people$AvgNumVotes[index]
+    av.scores = c(av.scores,score)
+    av.votes = c(av.votes,votes)
+  }
+  av.scores = mean(score)
+  av.votes = mean(votes)
+  
+  allBigMovies2$DirAvgScore[i] = av.scores
+  allBigMovies2$DirAvgVotes[i] = av.votes
+}
+
+
+
+#------------------------------------------------------------------------------
+### Same for writers
+#------------------------------------------------------------------------------
+allAvgScores = c()
+allAvgVotes = c()
+#Test code
+allBigMovies2 = allBigMovies2 %>% mutate("WriteAvgScore" = 0) %>% mutate("WriteAvgVotes" = 0)
+for (i in 1:nrow(allBigMovies)) {
+  writers = unlist(strsplit(allBigMovies$writers[i],","))
+  for (j in 1:length(writers)) {
+    index = match(writers[j],people$nconst)
+    score = people$AvgKnownScore[index]
+    votes = people$AvgNumVotes[index]
+    av.scores = c(av.scores,score)
+    av.votes = c(av.votes,votes)
+  }
+  av.scores = mean(score)
+  av.votes = mean(votes)
+  
+  allBigMovies2$WriteAvgScore[i] = av.scores
+  allBigMovies2$WriteAvgVotes[i] = av.votes
+}
+
+
+
+
+
+#------------------------------------------------------------------------------
+### Add Genre to movie data
+# -----------------------------------------------------------------------------
+
+
+#Determine what genres are in data
+#genres = c()
+#for (i in 1:length(allBigMovies$genres)) {
+#  movieGenres = strsplit(allBigMovies$genres[i],",")
+#  genres = c(genres,movieGenres)
+#}
+#genres = unlist(genres)
+#genres = genres[!duplicated(genres)]
+
+
+allBigMovies3 = allBigMovies2 %>% mutate ("isDrama" = grepl("Drama",allBigMovies$genres, fixed = TRUE)) %>%
+  mutate ("isSport" = grepl("Sport",allBigMovies$genres, fixed = TRUE)) %>%
+  mutate ("isRomance" = grepl("Romance",allBigMovies$genres, fixed = TRUE)) %>%
+  mutate ("isComedy" = grepl("Comedy",allBigMovies$genres, fixed = TRUE)) %>%
+  mutate ("isAdventure" = grepl("Adventure",allBigMovies$genres, fixed = TRUE)) %>%
+  mutate ("isHistory" = grepl("History",allBigMovies$genres, fixed = TRUE)) %>%
+  mutate ("isAction" = grepl("Action",allBigMovies$genres, fixed = TRUE)) %>%
+  mutate ("isBiography" = grepl("Biography",allBigMovies$genres, fixed = TRUE)) %>%
+  mutate ("isCrime" = grepl("Crime",allBigMovies$genres, fixed = TRUE)) %>%
+  mutate ("isMystery" = grepl("Mystery",allBigMovies$genres, fixed = TRUE)) %>%
+  mutate ("isWar" = grepl("War",allBigMovies$genres, fixed = TRUE)) %>%
+  mutate ("isSci-Fi" = grepl("Sci-Fi",allBigMovies$genres, fixed = TRUE)) %>%
+  mutate ("isFantasy" = grepl("Fantasy",allBigMovies$genres, fixed = TRUE)) %>%
+  mutate ("isThriller" = grepl("Thriller",allBigMovies$genres, fixed = TRUE)) %>%
+  mutate ("isHorror" = grepl("Horror",allBigMovies$genres, fixed = TRUE)) %>%
+  mutate ("isAnimation" = grepl("Animation",allBigMovies$genres, fixed = TRUE)) %>%
+  mutate ("isMusic" = grepl("Music",allBigMovies$genres, fixed = TRUE)) %>%
+  mutate ("isFamily" = grepl("Family",allBigMovies$genres, fixed = TRUE)) %>%
+  mutate ("isMusical" = grepl("Musical",allBigMovies$genres, fixed = TRUE)) %>%
+  mutate ("isDocumentary" = grepl("Documentary",allBigMovies$genres, fixed = TRUE)) %>%
+  mutate ("isNews" = grepl("News",allBigMovies$genres, fixed = TRUE)) %>%
+  mutate ("isWestern" = grepl("Western",allBigMovies$genres, fixed = TRUE))
+
+
+# write.csv(allBigMovies3,"AllBigMovies.csv")

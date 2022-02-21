@@ -4,8 +4,8 @@ library(tidyverse)
 
 title.ratings = read.delim('~/School/4th Year/DS4002/DS_Upload/title.ratings.tsv', sep = "\t", header = TRUE)
 title.basics.red = title.basics.red = read.csv("titleBasicsReduced.csv", header=TRUE)[,2:10]
-allBigMovies = read.csv("AllBigMovies.csv",header = TRUE)[,2:14]
-people = read.csv("name.basics.red.csv",header = TRUE)[,2:7]
+allBigMovies = read.csv("AllBigMovies.csv",header = TRUE)[,2:39]
+people = read.csv("names.basic.expanded.csv", header = TRUE)[,3:13]
 
 
 #------------------------------------------------------------------------------
@@ -70,6 +70,27 @@ titles = titles %>% mutate ("isDrama" = grepl("Drama",train.basic$genres, fixed 
   mutate ("isDocumentary" = grepl("Documentary",train.basic$genres, fixed = TRUE)) %>%
   mutate ("isNews" = grepl("News",train.basic$genres, fixed = TRUE)) %>%
   mutate ("isWestern" = grepl("Western",train.basic$genres, fixed = TRUE))
+
+
+
+#------------------------------------------------------------------------------
+### Combine person and title data
+#------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
