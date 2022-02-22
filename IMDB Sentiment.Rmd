@@ -132,7 +132,6 @@ for(tdm in tdmlist){
   counter <- counter + 1
   print(counter)
   dftdm <- as.data.frame(tdm)
-  #dftdm <- subset(dftdm, dftdm$freq >= 20)
   sentimentdm <- get_nrc_sentiment(dftdm$word)
   sentimentdm <- as.data.frame(colSums(sentimentdm))
   nrclist[[length(nrclist)+1]] <- sentimentdm
@@ -159,7 +158,6 @@ write.csv(nrcdf, "nrcdf.csv")
 ratings <- read.csv("scriptBasicRating.csv")
 ratings <- select(ratings, c("primaryTitle", "averageRating"))
 nrcratings <- merge(nrcdf, ratings, by.x = "name", by.y = "primaryTitle")
-nrcratings
 write.csv(nrcratings, "nrcratings.csv")
 ```
 
@@ -169,15 +167,46 @@ trainIndex <- createDataPartition(nrcratings$averageRating, p = 0.8, list = FALS
 head(trainIndex)
 nrctrain <- nrcratings[trainIndex,]
 nrctest <- nrcratings[-trainIndex,]
-nrctrain
-nrcSparse <- xgboost(data = as.matrix(nrctrain[,2:11]), label = nrctrain$averageRating, max.depth = 2, eta = 1, nthread = 2, nrounds = 15, objective = "reg:squarederror")
+nrctest
+nrcSparse <- xgboost(data = as.matrix(nrctrain[,2:11]), label = nrctrain$averageRating, max.depth = 2, eta = 0.3, nthread = 2, nrounds = 12, objective = "reg:squarederror")
 
 pred <- predict(nrcSparse, as.matrix(nrctest[,2:11]))
 print(head(pred))
 predf <- as.data.frame(pred)
 predf$real <- nrctest$averageRating
 predf$error <- abs(predf$real - predf$pred)
-meanError <- mean(predf$error)
-meanError
+predf
+modelanalysis <- data.frame(ncol = 3, nrows = 0)
+modelanalysis$mse <- mean((predf$real-predf$pred)^2)
+modelanalysis$mse
+modelanalysis$mae <- MAE(predf$real, predf$pred)
+modelanalysis$RMSE <- caret::RMSE(predf$real, predf$pred)
+
+plotlist <- list()
+predf$real
+predpred <- as.data.frame(predf$pred)
+predpred$ID <- "prediction"
+colnames(predpred)[1] <- "Value"
+predreal <- as.data.frame(predf$real)
+predreal$ID <- "real"
+colnames(predreal)[1] <- "Value"
+mergepredreal <- (rbind(predpred, predreal))
+mergepredreal
+```
+
+# Generation of Graphs Comparing Regression Line and Real Values 
+```{r}
+plotlist <- list()
+counter <- 0
+names <- colnames(nrctest[,2:11])
+for(column in nrctest[,2:11]){
+  counter <- counter+1
+  p <- ggplot(nrctest, aes(column, predf$pred)) + geom_point()
+  p <- p + labs(x = names[counter], y = "Predicted Value")
+  plotlist[[length(plotlist)+1]] <-  p 
+
+}
+plotlist[1]
+range(nrcratings$averageRating)
 ```
 
