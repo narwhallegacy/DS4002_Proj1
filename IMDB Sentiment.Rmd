@@ -146,7 +146,6 @@ for(nrc in nrclist){
   temp <- as.data.frame(t(nrc))
   nrcdf <- rbind(nrcdf, temp)
 }
-
 rownames(nrcdf) <- scripts$scripts
 nrcdf
 nrcdf$name <- rownames(nrcdf)
