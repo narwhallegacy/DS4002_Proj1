@@ -7,15 +7,29 @@ output: html_document
 
 ```{r}
 library(tidyverse)
+library(tm)
+library(topicmodels)
+library(SnowballC)
+library(ggwordcloud)
+library(RColorBrewer)
+library(syuzhet)
+library(lexicon)
+library(tidytext)
+library(textdata)
 ```
 # Reading Data 
 ```{r}
-file.choose()
 akas <- read.table(file = "/Users/jonathanyu/Desktop/IMDBProject/title.akas.tsv", sep = '\t', header = TRUE, fill = TRUE)
-akas <- subset(akas, region == "US" && ordering == 1)
+akas <- subset(akas, region == "US")
+akas <- subset(akas, ordering == 1)
+akas$title <- tolower(akas$title)
+akas$title <- gsub(" ", "-", akas$title)
 titlebasics <- read.table(file = '/Users/jonathanyu/Desktop/IMDBProject/title.basics.tsv', sep = '\t', header = TRUE, fill = TRUE)
-akas$titleId
-titlebasicssusbset <-subset(titlebasics, tconst == c(akas$titleId))
+akastbmerge <- merge(akas, titlebasics, by.x = "titleId", by.y = "tconst")
+                      
+akastbmerge <-subset(akastbmerge, titleType == "movie")
+akastbmerge
+
 crew <- read.table(file = '/Users/jonathanyu/Desktop/IMDBProject/title.crew.tsv', sep = '\t', header = TRUE, fill = TRUE)
 ratings <- read.table(file = '/Users/jonathanyu/Desktop/IMDBProject/title.ratings.tsv', sep = '\t', header = TRUE, fill = TRUE)
 
@@ -27,5 +41,116 @@ namebasics <- read.table(file = "/Users/jonathanyu/Desktop/IMDBProject/name.basi
 
 
 ```
+# Read in txt files from folder
+```{r}
+scripts <- c(list.files(path = "/Users/jonathanyu/Documents/GitHub/DS4002_Proj1/scripts"))
+scriptslist <- as.list(scripts)
+scripts <- as.data.frame(scripts)
+scripts$scripts
+scripts$scripts <- gsub(".txt", "", scripts$scripts)
+#scriptsmerged <- merge(scripts, akastbmerge, by.x = "scripts", by.y = "title")
+```
 
+# Creation of Script Objects
+```{r}
+textscriptlist <- list()
+g <- 0
+for(script in scriptslist){
+  assign(paste0("text", script), readLines(paste("/Users/jonathanyu/Documents/GitHub/DS4002_Proj1/scripts/",script, sep = "")))
+  g <- readLines(paste("/Users/jonathanyu/Documents/GitHub/DS4002_Proj1/scripts/",script, sep = ""))
+  textscriptlist[[length(textscriptlist)+1]] <- g
+}
+corpusscriptlist <- list()
+for(script in textscriptlist){
+  assign(paste0("corpus", script), Corpus(VectorSource(script)))
+  g <- Corpus(VectorSource(script))
+  corpusscriptlist[[length(corpusscriptlist)+1]] <- g            
+}
+removeExtras <- function(corpus){
+  toSpace <- content_transformer(function (x , pattern ) gsub(pattern, " ", x))
+  corpus <- tm_map(corpus, toSpace, "/")
+  corpus <- tm_map(corpus, toSpace, "@")
+  corpus <- tm_map(corpus, toSpace, "\\|")
+  # Convert the text to lower case
+  corpus <- tm_map(corpus, content_transformer(tolower))
+  # Remove numbers
+  corpus <- tm_map(corpus, removeNumbers)
+  # Remove english common stopwords
+  corpus <- tm_map(corpus, removeWords, stopwords("english"))
+  # Remove your own stop word
+  corpus <- tm_map(corpus, removeWords, c("continued", "contd", "int"))
+  # Remove punctuations
+  corpus <- tm_map(corpus, removePunctuation)
+  # Eliminate extra white spaces
+  corpus <- tm_map(corpus, stripWhitespace)
+  # Text stemming - which reduces words to their root form
+  # corpus <- tm_map(corpus, stemDocument)
+  corpus  
+}
+
+finalscriptlist <- list()
+for(script in corpusscriptlist){
+  g <- removeExtras(script)
+  finalscriptlist[[length(finalscriptlist)+1]] <- g
+}
+```
+
+```{r}
+# Build a term-document matrix
+tdmlist <- list()
+for(textdoc in finalscriptlist){
+  dtm <- TermDocumentMatrix(textdoc)
+  dtm_m <- as.matrix(dtm)
+  dtm_v <- sort(rowSums(dtm_m), decreasing = TRUE)
+  dtm_d <- data.frame(word = names(dtm_v), freq = dtm_v)
+  tdmlist[[length(tdmlist)+1]] <- dtm_d
+}
+
+```
+
+# Generate Wordcloud
+```{r}
+#generate word cloud
+set.seed(1234)
+wordcloudlist <- list()
+for(tdm in tdmlist){
+  wordcloudlist[[length(wordcloudlist)+1]] <- ggwordcloud(words = tdm$word, freq = tdm$freq, min.freq = 5,
+          max.words=100, random.order=FALSE, rot.per=0.40, 
+          colors=brewer.pal(8, "Dark2"))
+}
+
+wordcloudlist[3]
+```
+
+# Sentiment Analysis
+```{r}
+nrclist <- list()
+counter <- 0
+for(tdm in tdmlist){
+  counter <- counter + 1
+  print(counter)
+  dftdm <- as.data.frame(tdm)
+  dftdm <- subset(dftdm, dftdm$freq >= 20)
+  sentimentdm <- get_nrc_sentiment(dftdm$word)
+  sentimentdm <- as.data.frame(colSums(sentimentdm))
+  nrclist[[length(nrclist)+1]] <- sentimentdm
+}
+
+```
+
+
+```{r}
+for(nrc in nrclist){
+  temp <- as.data.frame(t(nrc))
+  nrcdf <- rbind(nrcdf, temp)
+}
+rownames(nrcdf) <- scripts$scripts
+nrcdf
+final <- colSums(nrcdf)
+final
+```
+
+```{r}
+
+```
 
