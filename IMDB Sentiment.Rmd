@@ -140,13 +140,16 @@ for(tdm in tdmlist){
 
 
 ```{r}
+nrcdf <- data.frame(matrix(ncol = 10, nrow = 0))
 for(nrc in nrclist){
   temp <- as.data.frame(t(nrc))
   nrcdf <- rbind(nrcdf, temp)
 }
+
 rownames(nrcdf) <- scripts$scripts
 nrcdf
 nrcdf$name <- rownames(nrcdf)
+write.csv(nrcdf, "nrcdf.csv")
 ```
 
 ```{r}
