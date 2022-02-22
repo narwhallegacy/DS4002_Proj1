@@ -16,6 +16,8 @@ library(syuzhet)
 library(lexicon)
 library(tidytext)
 library(textdata)
+library(xgboost)
+library(caret)
 ```
 # Reading Data 
 ```{r}
@@ -138,7 +140,7 @@ for(tdm in tdmlist){
 
 ```
 
-
+# NRC dataframe with all 240 scripts
 ```{r}
 nrcdf <- data.frame(matrix(ncol = 10, nrow = 0))
 for(nrc in nrclist){
@@ -152,14 +154,20 @@ nrcdf$name <- rownames(nrcdf)
 write.csv(nrcdf, "nrcdf.csv")
 ```
 
+# NRC ratings creation with 189 of the scripts
 ```{r}
 ratings <- read.csv("scriptBasicRating.csv")
 ratings <- select(ratings, c("primaryTitle", "averageRating"))
 nrcratings <- merge(nrcdf, ratings, by.x = "name", by.y = "primaryTitle")
 nrcratings
+write.csv(nrcratings, "nrcratings.csv")
 ```
 
+# XG Boost Model
 ```{r}
-
+trainIndex <- createDataPartition(nrcratings$averageRating, p = 0.8, list = FALSE, times = 1)
+head(trainIndex)
+nrctrain <- nrcratings[trainIndex,]
+nrctest <- nrcratings[-trainIndex,]
 ```
 
