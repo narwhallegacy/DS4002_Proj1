@@ -169,5 +169,15 @@ trainIndex <- createDataPartition(nrcratings$averageRating, p = 0.8, list = FALS
 head(trainIndex)
 nrctrain <- nrcratings[trainIndex,]
 nrctest <- nrcratings[-trainIndex,]
+nrctrain
+nrcSparse <- xgboost(data = as.matrix(nrctrain[,2:11]), label = nrctrain$averageRating, max.depth = 2, eta = 1, nthread = 2, nrounds = 15, objective = "reg:squarederror")
+
+pred <- predict(nrcSparse, as.matrix(nrctest[,2:11]))
+print(head(pred))
+predf <- as.data.frame(pred)
+predf$real <- nrctest$averageRating
+predf$error <- abs(predf$real - predf$pred)
+meanError <- mean(predf$error)
+meanError
 ```
 
