@@ -130,7 +130,7 @@ for(tdm in tdmlist){
   counter <- counter + 1
   print(counter)
   dftdm <- as.data.frame(tdm)
-  dftdm <- subset(dftdm, dftdm$freq >= 20)
+  #dftdm <- subset(dftdm, dftdm$freq >= 20)
   sentimentdm <- get_nrc_sentiment(dftdm$word)
   sentimentdm <- as.data.frame(colSums(sentimentdm))
   nrclist[[length(nrclist)+1]] <- sentimentdm
@@ -146,8 +146,14 @@ for(nrc in nrclist){
 }
 rownames(nrcdf) <- scripts$scripts
 nrcdf
-final <- colSums(nrcdf)
-final
+nrcdf$name <- rownames(nrcdf)
+```
+
+```{r}
+ratings <- read.csv("scriptBasicRating.csv")
+ratings <- select(ratings, c("primaryTitle", "averageRating"))
+nrcratings <- merge(nrcdf, ratings, by.x = "name", by.y = "primaryTitle")
+nrcratings
 ```
 
 ```{r}
