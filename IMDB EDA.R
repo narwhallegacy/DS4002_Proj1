@@ -1,5 +1,6 @@
 #EDA
 library(tidyverse)
+library(MASS)
 
 
 title.ratings = read.delim('~/School/4th Year/DS4002/DS_Upload/title.ratings.tsv', sep = "\t", header = TRUE)
@@ -10,11 +11,12 @@ people = read.csv("names.basic.expanded.csv", header = TRUE)[,3:13]
 
 #------------------------------------------------------------------------------
 #SingleRandomSample
+#allBigMovies.red = allBigMovies[,-c(1:5,7,9,12:13)]
 set.seed(4002)
 fold = sample(rep(1:10,length = length(allBigMovies$tconst)))
 test.basic = allBigMovies[fold==10,]
 train.basic = allBigMovies[!fold==10,]
-title.basics.red = merge(title.basics.red,title.ratings, by.x = "tconst", by.y = "tconst")
+#title.basics.red = merge(title.basics.red,title.ratings, by.x = "tconst", by.y = "tconst")
 #write.csv(file = "scriptBasicRating.csv",title.basics.red)
 
 #-----------------------------------------------------------------------------
@@ -45,55 +47,6 @@ genres = genres[!duplicated(genres)]
 #------------------------------------------------------------------------------
 
 
-#strsplit(title.basics.red$genres,",")
-
-titles = train.basic
-titles = titles %>% mutate ("isDrama" = grepl("Drama",train.basic$genres, fixed = TRUE)) %>%
-  mutate ("isSport" = grepl("Sport",train.basic$genres, fixed = TRUE)) %>%
-  mutate ("isRomance" = grepl("Romance",train.basic$genres, fixed = TRUE)) %>%
-  mutate ("isComedy" = grepl("Comedy",train.basic$genres, fixed = TRUE)) %>%
-  mutate ("isAdventure" = grepl("Adventure",train.basic$genres, fixed = TRUE)) %>%
-  mutate ("isHistory" = grepl("History",train.basic$genres, fixed = TRUE)) %>%
-  mutate ("isAction" = grepl("Action",train.basic$genres, fixed = TRUE)) %>%
-  mutate ("isBiography" = grepl("Biography",train.basic$genres, fixed = TRUE)) %>%
-  mutate ("isCrime" = grepl("Crime",train.basic$genres, fixed = TRUE)) %>%
-  mutate ("isMystery" = grepl("Mystery",train.basic$genres, fixed = TRUE)) %>%
-  mutate ("isWar" = grepl("War",train.basic$genres, fixed = TRUE)) %>%
-  mutate ("isSci-Fi" = grepl("Sci-Fi",train.basic$genres, fixed = TRUE)) %>%
-  mutate ("isFantasy" = grepl("Fantasy",train.basic$genres, fixed = TRUE)) %>%
-  mutate ("isThriller" = grepl("Thriller",train.basic$genres, fixed = TRUE)) %>%
-  mutate ("isHorror" = grepl("Horror",train.basic$genres, fixed = TRUE)) %>%
-  mutate ("isAnimation" = grepl("Animation",train.basic$genres, fixed = TRUE)) %>%
-  mutate ("isMusic" = grepl("Music",train.basic$genres, fixed = TRUE)) %>%
-  mutate ("isFamily" = grepl("Family",train.basic$genres, fixed = TRUE)) %>%
-  mutate ("isMusical" = grepl("Musical",train.basic$genres, fixed = TRUE)) %>%
-  mutate ("isDocumentary" = grepl("Documentary",train.basic$genres, fixed = TRUE)) %>%
-  mutate ("isNews" = grepl("News",train.basic$genres, fixed = TRUE)) %>%
-  mutate ("isWestern" = grepl("Western",train.basic$genres, fixed = TRUE))
-
-
-
-#------------------------------------------------------------------------------
-### Combine person and title data
-#------------------------------------------------------------------------------
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 #GenreModel
 genreModel = lm(averageRating ~ isDrama + isSport + isRomance + isComedy+ isAdventure + isHistory + isAction + isBiography + isCrime + 
                   isMystery + isWar + `isSci-Fi` + isFantasy + isThriller + isHorror + isAnimation + isMusic + isFamily + isMusical + isDocumentary +
@@ -108,3 +61,39 @@ ggplot(data = train.basic) + geom_point(aes(x=runtimeMinutes,y=averageRating)) +
 
 #NumReviews & Rating
 ggplot(data = train.basic) + geom_point(aes(x=numVotes,y=averageRating)) + xlab("Number of IMDb User Reviews") + ylab("Average IMDb Rating")
+
+
+
+
+
+
+
+#------------------------------------------------------------------------------
+### Big Model
+#------------------------------------------------------------------------------
+
+#Function to generate MSE of MLR model on test data
+validate = function(model,testData) {
+  preds = predict(model,testData[,-c(1:5,7,9,12:13)])
+  resid = preds - testData$averageRating
+  return(mean(resid**2, na.rm = TRUE))
+}
+
+
+
+full.model.1o = lm(averageRating ~ ., data=train.basic[,-c(1:5,7,9,12:13)])
+
+step.model.1o = stepAIC(full.model.1o, dorection = "both", trace = FALSE)
+
+summary(step.model.1o)
+
+step.mse.test = validate(step.model.1o,test.basic)
+
+
+full.model.1int = lm(averageRating ~ (.)^2,data=train.basic[,-c(1:5,7,9,12:13)])
+
+step.model.1int = step.model.1o = stepAIC(full.model.1int, dorection = "both", trace = FALSE)
+
+
+
+saveRDS(step.model.1o, "IMDb-MLR.rds")
