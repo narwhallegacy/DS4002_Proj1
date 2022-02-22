@@ -19,30 +19,7 @@ library(textdata)
 library(xgboost)
 library(caret)
 ```
-# Reading Data 
-```{r}
-akas <- read.table(file = "/Users/jonathanyu/Desktop/IMDBProject/title.akas.tsv", sep = '\t', header = TRUE, fill = TRUE)
-akas <- subset(akas, region == "US")
-akas <- subset(akas, ordering == 1)
-akas$title <- tolower(akas$title)
-akas$title <- gsub(" ", "-", akas$title)
-titlebasics <- read.table(file = '/Users/jonathanyu/Desktop/IMDBProject/title.basics.tsv', sep = '\t', header = TRUE, fill = TRUE)
-akastbmerge <- merge(akas, titlebasics, by.x = "titleId", by.y = "tconst")
-                      
-akastbmerge <-subset(akastbmerge, titleType == "movie")
-akastbmerge
 
-crew <- read.table(file = '/Users/jonathanyu/Desktop/IMDBProject/title.crew.tsv', sep = '\t', header = TRUE, fill = TRUE)
-ratings <- read.table(file = '/Users/jonathanyu/Desktop/IMDBProject/title.ratings.tsv', sep = '\t', header = TRUE, fill = TRUE)
-
-# Not Needed
-episode <- read.table(file = '/Users/jonathanyu/Desktop/IMDBProject/title.episode.tsv', sep = '\t', header = TRUE, fill = TRUE)
-principals <- read.table(file = '/Users/jonathanyu/Desktop/IMDBProject/title.principals.tsv', sep = '\t', header = TRUE, fill = TRUE)
-namebasics <- read.table(file = "/Users/jonathanyu/Desktop/IMDBProject/name.basics.tsv", sep = '\t', header = TRUE, fill = TRUE)
-
-
-
-```
 # Read in txt files from folder
 ```{r}
 scripts <- c(list.files(path = "/Users/jonathanyu/Documents/GitHub/DS4002_Proj1/scripts"))
@@ -121,7 +98,9 @@ for(tdm in tdmlist){
           colors=brewer.pal(8, "Dark2"))
 }
 
-wordcloudlist[3]
+for(word in wordcloudlist[1:10]){
+  plot(word)
+}
 ```
 
 # Sentiment Analysis
@@ -179,8 +158,10 @@ modelanalysis <- data.frame(ncol = 3, nrows = 0)
 modelanalysis$mse <- mean((predf$real-predf$pred)^2)
 modelanalysis$mse
 modelanalysis$mae <- MAE(predf$real, predf$pred)
+modelanalysis
 modelanalysis$RMSE <- caret::RMSE(predf$real, predf$pred)
-
+# rsq adjusted 
+nrctrain
 plotlist <- list()
 predf$real
 predpred <- as.data.frame(predf$pred)
