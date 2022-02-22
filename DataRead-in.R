@@ -210,6 +210,8 @@ allAvgVotes = c()
 allBigMovies2 = allBigMovies %>% mutate("DirAvgScore" = 0) %>% mutate("DirAvgVotes" = 0)
 for (i in 1:nrow(allBigMovies)) {
   directors = unlist(strsplit(allBigMovies$directors[i],","))
+  av.scores = c()
+  av.votes = c()
   for (j in 1:length(directors)) {
     #TODO run through all directors, extracting & averaging DirAvgScore and DirAvgVotes
     index = match(directors[j],people$nconst)
@@ -236,6 +238,8 @@ allAvgVotes = c()
 allBigMovies2 = allBigMovies2 %>% mutate("WriteAvgScore" = 0) %>% mutate("WriteAvgVotes" = 0)
 for (i in 1:nrow(allBigMovies)) {
   writers = unlist(strsplit(allBigMovies$writers[i],","))
+  av.scores = c()
+  av.votes = c()
   for (j in 1:length(writers)) {
     index = match(writers[j],people$nconst)
     score = people$AvgKnownScore[index]

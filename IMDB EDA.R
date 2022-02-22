@@ -5,7 +5,7 @@ library(MASS)
 
 title.ratings = read.delim('~/School/4th Year/DS4002/DS_Upload/title.ratings.tsv', sep = "\t", header = TRUE)
 title.basics.red = title.basics.red = read.csv("titleBasicsReduced.csv", header=TRUE)[,2:10]
-allBigMovies = read.csv("AllBigMovies.csv",header = TRUE)[,2:39]
+allBigMovies = read.csv("AllBigMovies.csv",header = TRUE)[,2:40]
 people = read.csv("names.basic.expanded.csv", header = TRUE)[,3:13]
 
 
@@ -36,21 +36,21 @@ train.basic = allBigMovies[!fold==10,]
 
 #-------------------------------------------------------------------------------
 #Determine what genres are in data
-genres = c()
-for (i in 1:length(allBigMovies$genres)) {
-  movieGenres = strsplit(allBigMovies$genres[i],",")
-  genres = c(genres,movieGenres)
-}
-genres = unlist(genres)
-genres = genres[!duplicated(genres)]
+#genres = c()
+#for (i in 1:length(allBigMovies$genres)) {
+#  movieGenres = strsplit(allBigMovies$genres[i],",")
+#  genres = c(genres,movieGenres)
+#}
+#genres = unlist(genres)
+#genres = genres[!duplicated(genres)]
 
 #------------------------------------------------------------------------------
 
 
 #GenreModel
 genreModel = lm(averageRating ~ isDrama + isSport + isRomance + isComedy+ isAdventure + isHistory + isAction + isBiography + isCrime + 
-                  isMystery + isWar + `isSci-Fi` + isFantasy + isThriller + isHorror + isAnimation + isMusic + isFamily + isMusical + isDocumentary +
-                  isNews + isWestern, data=titles)  
+                  isMystery + isWar + `isSci.Fi` + isFantasy + isThriller + isHorror + isAnimation + isMusic + isFamily + isMusical + isDocumentary +
+                  isNews + isWestern, data=allBigMovies)  
 
 
 #Release Year & Rating
@@ -87,13 +87,21 @@ step.model.1o = stepAIC(full.model.1o, dorection = "both", trace = FALSE)
 
 summary(step.model.1o)
 
-step.mse.test = validate(step.model.1o,test.basic)
+validate(step.model.1o,test.basic)
 
 
-full.model.1int = lm(averageRating ~ (.)^2,data=train.basic[,-c(1:5,7,9,12:13)])
-
-step.model.1int = step.model.1o = stepAIC(full.model.1int, dorection = "both", trace = FALSE)
+#saveRDS(step.model.1o, "IMDb-MLR.rds")
 
 
 
-saveRDS(step.model.1o, "IMDb-MLR.rds")
+
+
+#full.model.1int = lm(averageRating ~ (.)^2,data=train.basic[,-c(1:5,7,9,12:13)])
+
+
+#validate(full.model.1int,test.basic)
+#step.model.1int = step.model.1o = stepAIC(full.model.1int, dorection = "both", trace = FALSE)
+
+
+
+#saveRDS(step.model.1o, "IMDb-MLR.rds")
