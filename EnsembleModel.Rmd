@@ -19,3 +19,9 @@ allBigMovies = read.csv("AllBigMovies.csv",header = TRUE)[,2:39]
 
 ```
 
+
+
+```{r ensemble}
+
+```
+

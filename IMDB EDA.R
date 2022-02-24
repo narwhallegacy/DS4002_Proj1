@@ -73,12 +73,18 @@ ggplot(data = train.basic) + geom_point(aes(x=numVotes,y=averageRating)) + xlab(
 #------------------------------------------------------------------------------
 
 #Function to generate MSE of MLR model on test data
-validate = function(model,testData) {
+validate.mse = function(model,testData) {
   preds = predict(model,testData[,-c(1:5,7,9,12:13)])
   resid = preds - testData$averageRating
   return(mean(resid**2, na.rm = TRUE))
 }
 
+
+validate.mae = function(model,testData) {
+  preds = predict(model,testData[,-c(1:5,7,9,12:13)])
+  resid = preds - testData$averageRating
+  return(mean(abs(resid), na.rm = TRUE))
+}
 
 
 full.model.1o = lm(averageRating ~ ., data=train.basic[,-c(1:5,7,9,12:13)])
@@ -87,7 +93,11 @@ step.model.1o = stepAIC(full.model.1o, dorection = "both", trace = FALSE)
 
 summary(step.model.1o)
 
-validate(step.model.1o,test.basic)
+validate.mse(step.model.1o,test.basic)
+validate.mae(step.model.1o,test.basic)
+
+
+#TODO MSE, MAE, RMSE, R^2 adj
 
 
 #saveRDS(step.model.1o, "IMDb-MLR.rds")
