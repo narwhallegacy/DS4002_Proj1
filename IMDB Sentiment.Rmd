@@ -22,7 +22,8 @@ library(caret)
 
 # Read in txt files from folder
 ```{r}
-scripts <- c(list.files(path = "/Users/jonathanyu/Documents/GitHub/DS4002_Proj1/scripts"))
+scripts <- c(list.files(path = "/Users/jonathanyu/Documents/GitHub/DS4002_Proj1/imsdbscripts"))
+scripts
 scriptslist <- as.list(scripts)
 scripts <- as.data.frame(scripts)
 scripts$scripts
