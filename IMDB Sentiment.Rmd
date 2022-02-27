@@ -17,6 +17,7 @@ library(lexicon)
 library(tidytext)
 library(textdata)
 library(xgboost)
+library(parallel)
 library(caret)
 ```
 
@@ -36,8 +37,8 @@ scripts$scripts <- gsub(".txt", "", scripts$scripts)
 textscriptlist <- list()
 g <- 0
 for(script in scriptslist){
-  assign(paste0("text", script), readLines(paste("/Users/jonathanyu/Documents/GitHub/DS4002_Proj1/scripts/",script, sep = "")))
-  g <- readLines(paste("/Users/jonathanyu/Documents/GitHub/DS4002_Proj1/scripts/",script, sep = ""))
+  assign(paste0("text", script), readLines(paste("/Users/jonathanyu/Documents/GitHub/DS4002_Proj1/imsdbscripts/",script, sep = "")))
+  g <- readLines(paste("/Users/jonathanyu/Documents/GitHub/DS4002_Proj1/imsdbscripts/",script, sep = ""))
   textscriptlist[[length(textscriptlist)+1]] <- g
 }
 corpusscriptlist <- list()
@@ -98,82 +99,117 @@ for(tdm in tdmlist){
           max.words=100, random.order=FALSE, rot.per=0.40, 
           colors=brewer.pal(8, "Dark2"))
 }
-
 for(word in wordcloudlist[1:10]){
   plot(word)
 }
+
 ```
 
 # Sentiment Analysis
 ```{r}
+# Ones that don't work: 772, 362, 695, 820, 853
 nrclist <- list()
 counter <- 0
-for(tdm in tdmlist){
+cl <- makeCluster(2)
+clusterExport(cl = cl, c("get_sentiment", "get_sent_values", "get_nrc_sentiment", "get_nrc_values", "parLapply"))
+for(tdm in tdmlist[362:1146]){
   counter <- counter + 1
   print(counter)
-  dftdm <- as.data.frame(tdm)
-  sentimentdm <- get_nrc_sentiment(dftdm$word)
-  sentimentdm <- as.data.frame(colSums(sentimentdm))
-  nrclist[[length(nrclist)+1]] <- sentimentdm
+  if(length(tdm$word) <= 0){
+    print(paste(counter, " does not work"))
+  }
+  else{
+    dftdm <- as.data.frame(tdm)
+    sentimentdm <- get_nrc_sentiment(dftdm$word)
+    sentimentdm <- as.data.frame(colSums(sentimentdm))
+    nrclist[[length(nrclist)+1]] <- sentimentdm
+  }
+  
 }
 
 ```
 
-# NRC dataframe with all 240 scripts
+# NRC dataframe with all 1045 scripts
 ```{r}
 nrcdf <- data.frame(matrix(ncol = 10, nrow = 0))
 for(nrc in nrclist){
   temp <- as.data.frame(t(nrc))
   nrcdf <- rbind(nrcdf, temp)
+  
 }
-rownames(nrcdf) <- scripts$scripts
-nrcdf
+scripts$scripts
+nrcdf <- nrcdf[-c(1),]
+length(rownames(nrcdf))
+rownames(nrcdf) <- scripts$scripts[-c(362, 772, 695, 820, 853)]
 nrcdf$name <- rownames(nrcdf)
-write.csv(nrcdf, "nrcdf.csv")
+write.csv(nrcdf, "nrcdf1146.csv")
 ```
 
-# NRC ratings creation with 189 of the scripts
+# NRC ratings creation with 1140 of the scripts
 ```{r}
-ratings <- read.csv("scriptBasicRating.csv")
-ratings <- select(ratings, c("primaryTitle", "averageRating"))
-nrcratings <- merge(nrcdf, ratings, by.x = "name", by.y = "primaryTitle")
+ratings <- read.csv("AllBigMovies.csv")
+linktable <- read.csv("linkTable.csv")
+nrcdf$name <- paste(nrcdf$name, ".txt", sep = "")
+ratings <- select(ratings, c("primaryTitle", "averageRating", "tconst"))
+initiallink <- merge(nrcdf, linktable, by.x = "name", by.y = "file")
+nrcratings <- merge(initiallink, ratings, by.x = "tconst", by.y = "tconst")
+nrcratings <- subset(nrcratings, nrcratings$anger >= 5)
 write.csv(nrcratings, "nrcratings.csv")
 ```
 
-# XG Boost Model
+```{r}
+sentimentdist <- colSums(nrcratings[,3:12])
+sentimentdist <- as.data.frame(sentimentdist)
+sentimentdist$sentiment <- rownames(sentimentdist)
+sentimentdist
+p <- ggplot(sentimentdist, aes(x = sentimentdist, y = sentiment, fill = sentiment)) + 
+  geom_bar(stat = "identity") + theme_minimal() + scale_fill_brewer(palette = "Set3") + labs(x = "Number of Words", y = "Sentiment", title = "All Scripts (755)")
+p
+ratingdist <- nrcratings$averageRating
+ratingdist <- as.data.frame(ratingdist)
+histp <- ggplot(ratingdist, aes(x = ratingdist)) + geom_histogram(fill = "white", color = "black") + labs(x = "Average Rating", y = "Number of Movies", title = "Average Rating Distribution of All Scripts (755)")
+histp
+``` 
+
+# Creation of Training and Test Sets and Visualizations 
 ```{r}
 trainIndex <- createDataPartition(nrcratings$averageRating, p = 0.8, list = FALSE, times = 1)
 head(trainIndex)
 nrctrain <- nrcratings[trainIndex,]
 nrctest <- nrcratings[-trainIndex,]
-nrctest
-nrcSparse <- xgboost(data = as.matrix(nrctrain[,2:11]), label = nrctrain$averageRating, max.depth = 2, eta = 0.3, nthread = 2, nrounds = 12, objective = "reg:squarederror")
+sentimentdisttrain <- colSums(nrctrain[,3:12])
+sentimentdisttrain <- as.data.frame(sentimentdisttrain)
+sentimentdisttrain$name <- rownames(sentimentdisttrain)
+trainp <- ggplot(sentimentdisttrain, aes(x = sentimentdisttrain, y = name, fill = name)) + 
+  geom_bar(stat = "identity") + theme_minimal() + scale_fill_brewer(palette = "Set3") + labs(x = "Number of Words", y = "Sentiment", title = "Training Scripts Distribution")
+trainp
+sentimentdisttest <- colSums(nrctest[,3:12])
+sentimentdisttest <- as.data.frame(sentimentdisttest)
+sentimentdisttest$name <- rownames(sentimentdisttest)
+testp <- ggplot(sentimentdisttest, aes(x = sentimentdisttest, y = name, fill = name)) + 
+  geom_bar(stat = "identity") + theme_minimal() + scale_fill_brewer(palette = "Set3") + labs(x = "Number of Words", y = "Sentiment", title = "Testing Scripts Distribution")
+testp
+```
 
-pred <- predict(nrcSparse, as.matrix(nrctest[,2:11]))
+# XG Boost Model 
+```{r}
+nrcSparse <- xgboost(data = as.matrix(nrctrain[,3:12]), label = nrctrain$averageRating, max.depth = 3, eta = 0.3, nthread = 2, nrounds = 13, objective = "reg:squarederror")
+
+pred <- predict(nrcSparse, as.matrix(nrctest[,3:12]))
 print(head(pred))
 predf <- as.data.frame(pred)
 predf$real <- nrctest$averageRating
 predf$error <- abs(predf$real - predf$pred)
-predf
-modelanalysis <- data.frame(ncol = 3, nrows = 0)
+modelanalysis <- data.frame(row = 0)
 modelanalysis$mse <- mean((predf$real-predf$pred)^2)
-modelanalysis$mse
 modelanalysis$mae <- MAE(predf$real, predf$pred)
-modelanalysis
 modelanalysis$RMSE <- caret::RMSE(predf$real, predf$pred)
+modelanalysis
 # rsq adjusted 
-nrctrain
-plotlist <- list()
-predf$real
-predpred <- as.data.frame(predf$pred)
-predpred$ID <- "prediction"
-colnames(predpred)[1] <- "Value"
-predreal <- as.data.frame(predf$real)
-predreal$ID <- "real"
-colnames(predreal)[1] <- "Value"
-mergepredreal <- (rbind(predpred, predreal))
-mergepredreal
+
 ```
+
+
 
 # Generation of Graphs Comparing Regression Line and Real Values 
 ```{r}
