@@ -205,25 +205,12 @@ modelanalysis$mse <- mean((predf$real-predf$pred)^2)
 modelanalysis$mae <- MAE(predf$real, predf$pred)
 modelanalysis$RMSE <- caret::RMSE(predf$real, predf$pred)
 modelanalysis
+saveRDS(nrcSparse, "xgboostsentiment.RDS")
+readRDS("xgboostsentiment.RDS")
 # rsq adjusted 
 
 ```
 
 
 
-# Generation of Graphs Comparing Regression Line and Real Values 
-```{r}
-plotlist <- list()
-counter <- 0
-names <- colnames(nrctest[,2:11])
-for(column in nrctest[,2:11]){
-  counter <- counter+1
-  p <- ggplot(nrctest, aes(column, predf$pred)) + geom_point()
-  p <- p + labs(x = names[counter], y = "Predicted Value")
-  plotlist[[length(plotlist)+1]] <-  p 
-
-}
-plotlist[1]
-range(nrcratings$averageRating)
-```
 
