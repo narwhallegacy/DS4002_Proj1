@@ -180,15 +180,24 @@ nrctest <- nrcratings[-trainIndex,]
 sentimentdisttrain <- colSums(nrctrain[,3:12])
 sentimentdisttrain <- as.data.frame(sentimentdisttrain)
 sentimentdisttrain$name <- rownames(sentimentdisttrain)
+
 trainp <- ggplot(sentimentdisttrain, aes(x = sentimentdisttrain, y = name, fill = name)) + 
   geom_bar(stat = "identity") + theme_minimal() + scale_fill_brewer(palette = "Set3") + labs(x = "Number of Words", y = "Sentiment", title = "Training Scripts Distribution")
 trainp
+trainrating <- nrctrain$averageRating
+trainrating <- as.data.frame(trainrating)
+histtrainp <- ggplot(trainrating, aes(x = trainrating)) + geom_histogram(fill = "white", color = "black") + labs(x = "Average Rating", y = "Number of Movies", title = "Average Rating Distribution of Training Scripts")
+histtrainp
 sentimentdisttest <- colSums(nrctest[,3:12])
 sentimentdisttest <- as.data.frame(sentimentdisttest)
 sentimentdisttest$name <- rownames(sentimentdisttest)
 testp <- ggplot(sentimentdisttest, aes(x = sentimentdisttest, y = name, fill = name)) + 
   geom_bar(stat = "identity") + theme_minimal() + scale_fill_brewer(palette = "Set3") + labs(x = "Number of Words", y = "Sentiment", title = "Testing Scripts Distribution")
 testp
+testrating <- nrctest$averageRating
+testrating <- as.data.frame(testrating)
+histtestp <-  ggplot(testrating, aes(x = testrating)) + geom_histogram(fill = "white", color = "black") + labs(x = "Average Rating", y = "Number of Movies", title = "Average Rating Distribution of Testing Scripts")
+histtestp
 ```
 
 # XG Boost Model 
